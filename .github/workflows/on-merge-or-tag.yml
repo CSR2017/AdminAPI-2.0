@@ -64,4 +64,4 @@ jobs:
             Authorization = "Bearer ${{ env.TOKEN }}"
           }
 
-          Invoke-RestMethod -Method POST -Uri ${{ env.API_URL }}/releases -Body $body -Headers $headers
+          #Invoke-RestMethod -Method POST -Uri ${{ env.API_URL }}/releases -Body $body -Headers $headers
