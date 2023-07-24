@@ -17,7 +17,7 @@ env:
   MANIFEST_FILE: "_manifest/spdx_2.2/manifest.spdx.json"
   PACKAGE_NAME: "AdminApi"
   IMAGE_NAME: ${{ vars.IMAGE_NAME }}
-  DATABASE_IMAGE_NAME: $${{ vars.DATABASE_IMAGE_NAME }}
+  DATABASE_IMAGE_NAME: ${{ vars.DATABASE_IMAGE_NAME }}
   DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
   REF: ${{ github.ref_name }}
