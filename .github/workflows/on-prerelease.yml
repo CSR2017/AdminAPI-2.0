@@ -248,6 +248,14 @@ jobs:
   docker-publish:
     name: Publish to Docker Hub
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: ./Docker/api-pgsql.Dockerfile
+            image: ${{ env.IMAGE_NAME }}
+          - dockerfile: ./Docker/Settings/DB-Admin/pgsql/Dockerfile
+            image: ${{ env.DATABASE_IMAGE_NAME }}
     needs:
       - publish-package
     steps:
@@ -258,8 +266,6 @@ jobs:
       - name: Prepare Tags
         id: prepare-tags
         run: |
-          BASE="${{ env.IMAGE_NAME }}"
-
           REF="${{ env.REF }}"   
 
           if [[ $REF =~ "Pre-Release" ]]
@@ -299,18 +305,19 @@ jobs:
         id: meta
         uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96  # v4.3.0
         with:
-          images: |
-           ${{ env.IMAGE_NAME }}
+          images: ${{ matrix.image }}
+           # ${{ env.IMAGE_NAME }}
            # ${{ env.DATABASE_IMAGE_NAME }}
 
       - name: Build and push admin api image
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671  # v4.0.0
         with:
-          context: "{{defaultContext}}:Docker"
+          context: "{{defaultContext}}"
           cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:pre
           cache-to: type=inline
           build-args: VERSION=${{ steps.prepare-tags.outputs.VERSION }}
-          file: api-pgsql.Dockerfile
+         # file: api-pgsql.Dockerfile
+          file: ${{ matrix.dockerfile }}
           tags: ${{ steps.prepare-tags.outputs.TAGS }}
           labels: ${{ steps.meta.outputs.labels }}
           push: true
