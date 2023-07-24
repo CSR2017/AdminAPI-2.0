@@ -270,17 +270,20 @@ jobs:
           if [[ $PACKAGEVERSION =~ "alpha" ]]
           then
             # Pre-releases get the tag "pre"
-            TAGS="${{ env.IMAGE_NAME }}:pre"
+            APITAGS="${{ env.IMAGE_NAME }}:pre"
+            DBTAGS="${{ env.DATABASE_IMAGE_NAME }}:pre"
           else
             # Releases get the version, plus shortened form for minor release.
             # We are not using shortened form for major or using "latest"
             # because they are too imprecise.
             MINOR=`echo ${PACKAGEVERSION} | awk -F"." '{print $1"."$2}'`
-            TAGS="${{ env.IMAGE_NAME }}:${PACKAGEVERSION},${{ env.IMAGE_NAME }}:${MINOR}"
+            APITAGS="${{ env.IMAGE_NAME }}:${PACKAGEVERSION},${{ env.IMAGE_NAME }}:${MINOR}"
+            DBTAGS="${{ env.DATABASE_IMAGE_NAME }}:${PACKAGEVERSION},${{ env.DATABASE_IMAGE_NAME }}:${MINOR}"
           fi
 
           SEMVERSION=${PACKAGEVERSION:1}  # strip off the leading 'v'
-          echo "TAGS=$TAGS" >> $GITHUB_OUTPUT
+          echo "APITAGS=$APITAGS" >> $GITHUB_OUTPUT
+          echo "DBTAGS=$DBTAGS" >> $GITHUB_OUTPUT
           # echo "VERSION=$SEMVERSION" >> $GITHUB_OUTPUT
           echo "VERSION=0.0.0-alpha.0.67" >> $GITHUB_OUTPUT
 
@@ -307,7 +310,7 @@ jobs:
           cache-to: type=inline
           build-args: VERSION=${{ steps.prepare-tags.outputs.VERSION }}
           file: api-pgsql.Dockerfile
-          tags: ${{ steps.prepare-tags.outputs.TAGS }}
+          tags: ${{ steps.prepare-tags.outputs.APITAGS }}
           labels: ${{ steps.metaapi.outputs.labels }}
           push: true
 
@@ -325,6 +328,6 @@ jobs:
           cache-to: type=inline
           build-args: VERSION=${{ steps.prepare-tags.outputs.VERSION }}
           file: Dockerfile
-          tags: ${{ steps.prepare-tags.outputs.TAGS }}
+          tags: ${{ steps.prepare-tags.outputs.DBTAGS }}
           labels: ${{ steps.metadatabase.outputs.labels }}
           push: true
