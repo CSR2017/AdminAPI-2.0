@@ -267,6 +267,8 @@ jobs:
              # Remove Pre-Release prefix 
              PREFIX="Pre-Release-"
              PACKAGEVERSION=${REF#"$PREFIX"}
+          else
+             PACKAGEVERSION=${REF}
           fi
 
           if [[ $PACKAGEVERSION =~ "alpha" ]]
@@ -278,6 +280,7 @@ jobs:
             # Releases get the version, plus shortened form for minor release.
             # We are not using shortened form for major or using "latest"
             # because they are too imprecise.
+            echo "${PACKAGEVERSION}"
             MINOR=`echo ${PACKAGEVERSION} | awk -F"." '{print $1"."$2}'`
             APITAGS="${{ env.IMAGE_NAME }}:${PACKAGEVERSION},${{ env.IMAGE_NAME }}:${MINOR}"
             DBTAGS="${{ env.DATABASE_IMAGE_NAME }}:${PACKAGEVERSION},${{ env.DATABASE_IMAGE_NAME }}:${MINOR}"
