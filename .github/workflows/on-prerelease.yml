@@ -334,7 +334,7 @@ jobs:
 
       - name: Analyze for critical and high CVEs
         id: docker-scout-cves        
-        uses: docker/scout-action@v0.18
+        uses: docker/scout-action@v0.20.0
         with:
           command: cves
           image: ${{ steps.metaapi.outputs.tags }}
