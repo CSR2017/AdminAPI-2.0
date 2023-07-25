@@ -288,6 +288,7 @@ jobs:
           echo "DBTAGS=$DBTAGS" >> $GITHUB_OUTPUT
           # echo "VERSION=$SEMVERSION" >> $GITHUB_OUTPUT
           echo "VERSION=0.0.0-alpha.0.67" >> $GITHUB_OUTPUT
+          echo "${APITAGS}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c  # v2.5.0
