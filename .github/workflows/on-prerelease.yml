@@ -337,7 +337,7 @@ jobs:
         uses: docker/scout-action@v0.20.0
         with:
           command: cves
-          image: ${{ steps.metaapi.outputs.tags }}
+          image: ${{ steps.prepare-tags.outputs.APITAGS }}
           sarif-file: sarif.output.json
           summary: true
       
