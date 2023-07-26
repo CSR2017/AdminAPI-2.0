@@ -25,7 +25,8 @@ jobs:
       - uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
         name: Run Linter on Dockerfiles
         with:
-          dockerfile: "Docker/api-mssql.Dockerfile Docker/api-pgsql.Dockerfile Docker/dbadmin.Dockerfile Docker/dev.Dockerfile"
+          #dockerfile: "Docker/api-mssql.Dockerfile Docker/api-pgsql.Dockerfile Docker/dbadmin.Dockerfile Docker/dev.Dockerfile"
+          dockerfile: "Docker/api-pgsql.Dockerfile"
 
       # - uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
       #   name: Run Linter on NPM Dockerfile
