@@ -44,4 +44,6 @@ RUN apk --no-cache add curl=~8 dos2unix=~7 bash=~5 gettext=~0 icu=~72 gcompat &&
 EXPOSE 443
 WORKDIR /app
 
+# dummy change for testing lint
+
 ENTRYPOINT ["/app/run.sh"]
