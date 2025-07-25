@@ -104,5 +104,5 @@ public interface IResourceClaimOnClaimSetRequest
 {
     int ClaimSetId { get; }
     int ResourceClaimId { get; }
-    public List<ResourceClaimAction>? ResourceClaimActions { get; }
+    List<ResourceClaimAction>? ResourceClaimActions { get; }
 }

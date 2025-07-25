@@ -9,7 +9,7 @@ namespace EdFi.Ods.AdminApi.Infrastructure.Services;
 
 public interface ISimpleGetRequest
 {
-    public Task<string> DownloadString(string address);
+    Task<string> DownloadString(string address);
 }
 
 public class SimpleGetRequest : ISimpleGetRequest

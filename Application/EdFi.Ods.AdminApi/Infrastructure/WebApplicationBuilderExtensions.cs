@@ -29,6 +29,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
+using Quartz;
+using EdFi.Ods.AdminApi.Infrastructure.BackgroundJobs;
 
 namespace EdFi.Ods.AdminApi.Infrastructure;
 
@@ -212,6 +214,28 @@ public static class WebApplicationBuilderExtensions
         webApplicationBuilder.Services.AddHttpClient();
         webApplicationBuilder.Services.AddTransient<ISimpleGetRequest, SimpleGetRequest>();
         webApplicationBuilder.Services.AddTransient<IOdsApiValidator, OdsApiValidator>();
+
+        webApplicationBuilder.Services.ConfigureHealthCheckServices(
+            webApplicationBuilder.Configuration
+        );
+
+        // Quartz.NET back end service
+        webApplicationBuilder.Services.AddQuartz(q =>
+        {
+            var jobKey = new JobKey("HealthCheckJob");
+            q.AddJob<HealthCheckJob>(opts => opts.WithIdentity(jobKey));
+
+            // Create a trigger that fires every 10 minutes
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("HealthCheckJob-trigger")
+                .WithSimpleSchedule(x => x
+                    .WithInterval(TimeSpan.FromMinutes(10))
+                    .RepeatForever())
+            );
+        });
+
+        webApplicationBuilder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
     }
 
     private static void EnableMultiTenancySupport(this WebApplicationBuilder webApplicationBuilder)

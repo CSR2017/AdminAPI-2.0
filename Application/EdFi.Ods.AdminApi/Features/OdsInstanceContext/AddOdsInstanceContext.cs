@@ -52,7 +52,7 @@ public class AddOdsInstanceContext : IFeature
         {
             _getOdsInstanceQuery = getOdsInstanceQuery;
             _getOdsInstanceContextsQuery = getOdsInstanceContextsQuery;
-            
+
             RuleFor(m => m.ContextKey).NotEmpty();
 
             RuleFor(m => m.ContextValue).NotEmpty();

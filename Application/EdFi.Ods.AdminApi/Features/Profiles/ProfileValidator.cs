@@ -37,11 +37,11 @@ namespace EdFi.Ods.AdminApi.Features.Profiles
                 if (profile != null && !string.IsNullOrEmpty(name))
                 {
                     var profileName = profile.GetAttribute("name");
-                    if(!profileName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                    if (!profileName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        context.AddFailure(propertyName, $"Profile name attribute value should match with {name}." );
+                        context.AddFailure(propertyName, $"Profile name attribute value should match with {name}.");
                     }
-                }          
+                }
             }
             catch (Exception ex)
             {
