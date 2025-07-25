@@ -22,6 +22,9 @@ COPY --from=assets ./Application/EdFi.Ods.AdminApi.AdminConsole EdFi.Ods.AdminAp
 COPY --from=assets ./Application/NuGet.Config EdFi.Ods.AdminApi.Common/
 COPY --from=assets ./Application/EdFi.Ods.AdminApi.Common EdFi.Ods.AdminApi.Common/
 
+COPY --from=assets ./Application/NuGet.Config EdFi.AdminConsole.HealthCheckService/
+COPY --from=assets ./Application/EdFi.AdminConsole.HealthCheckService EdFi.AdminConsole.HealthCheckService/
+
 WORKDIR /source/EdFi.Ods.AdminApi
 RUN export ASPNETCORE_ENVIRONMENT=$ASPNETCORE_ENVIRONMENT
 RUN dotnet restore && dotnet build -c Release

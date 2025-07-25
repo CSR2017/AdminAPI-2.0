@@ -32,13 +32,14 @@
 	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  <PrivateAssets>all</PrivateAssets>
 	</PackageReference>
-	<PackageReference Include="System.Text.Encodings.Web" Version="4.5.1" />
+	<PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\EdFi.Ods.AdminApi.AdminConsole\EdFi.Ods.AdminApi.AdminConsole.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="logging.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

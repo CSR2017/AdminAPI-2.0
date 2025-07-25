@@ -3,14 +3,14 @@
 // The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 // See the LICENSE and NOTICES files in the project root for more information.
 
-using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
+using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.DataAccess.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EdFi.AdminConsole.HealthCheckService.Helpers;
 
 public static class InstanceValidator
 {
-    public static bool IsInstanceValid(ILogger logger, AdminConsoleInstance instance)
+    public static bool IsInstanceValid(ILogger logger, Instance instance)
     {
         var messages = new List<string>();
 
@@ -18,17 +18,11 @@ public static class InstanceValidator
             messages.Add("instance cannot be empty.");
         else
         {
-            if (string.IsNullOrEmpty(instance.OauthUrl))
+            if (string.IsNullOrEmpty(instance.OAuthUrl))
                 messages.Add("AuthenticationUrl is required.");
 
             if (string.IsNullOrEmpty(instance.ResourceUrl))
                 messages.Add("ResourceUrl is required.");
-
-            if (string.IsNullOrEmpty(instance.ClientId))
-                messages.Add("ClientId is required.");
-
-            if (string.IsNullOrEmpty(instance.ClientSecret))
-                messages.Add("ClientSecret is required.");
         }
 
         if (messages != null && messages.Count > 0)

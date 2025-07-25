@@ -27,6 +27,7 @@ public static class HealthCheckServiceExtension
 #pragma warning restore CS8603 // Possible null reference return.
 
         services.AddSingleton<IAppSettingsOdsApiEndpoints, AppSettingsOdsApiEndpoints>();
+        services.AddSingleton<IApplication, Application>();
 
         services.AddTransient<IHttpRequestMessageBuilder, HttpRequestMessageBuilder>();
 
