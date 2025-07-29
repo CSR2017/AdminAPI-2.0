@@ -7,6 +7,9 @@ using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
 using EdFi.AdminConsole.HealthCheckService.Features.OdsApi;
 using EdFi.AdminConsole.HealthCheckService.Infrastructure;
 using EdFi.AdminConsole.HealthCheckService;
+using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Tenants;
+using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Instances.Queries;
+using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.HealthChecks.Commands;
 
 namespace EdFi.Ods.AdminApi.Infrastructure.BackgroundJobs;
 
@@ -19,7 +22,6 @@ public static class HealthCheckServiceExtension
     {
         services.AddOptions();
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
-        services.Configure<AdminApiSettings>(configuration.GetSection("AdminApiSettings"));
         services.Configure<OdsApiSettings>(configuration.GetSection("OdsApiSettings"));
 
 #pragma warning disable CS8603 // Possible null reference return.
@@ -27,14 +29,14 @@ public static class HealthCheckServiceExtension
 #pragma warning restore CS8603 // Possible null reference return.
 
         services.AddSingleton<IAppSettingsOdsApiEndpoints, AppSettingsOdsApiEndpoints>();
-        services.AddSingleton<IApplication, Application>();
+        services.AddScoped<IApplication, Application>();
 
         services.AddTransient<IHttpRequestMessageBuilder, HttpRequestMessageBuilder>();
+        services.AddTransient<IAdminConsoleTenantsService, TenantService>();
+        services.AddTransient<IGetInstancesQuery, GetInstancesQuery>();
+        services.AddTransient<IAddHealthCheckCommand, AddHealthCheckCommand>();
 
-        services.AddTransient<IAdminApiClient, AdminApiClient>();
         services.AddTransient<IOdsApiClient, OdsApiClient>();
-
-        services.AddTransient<IAdminApiCaller, AdminApiCaller>();
         services.AddTransient<IOdsApiCaller, OdsApiCaller>();
 
         services.AddTransient<IHostedService, Application>();
@@ -58,8 +60,6 @@ public static class HealthCheckServiceExtension
                 }
                 return handler;
             });
-
-        services.AddTransient<AdminApiClient>();
 
         return services;
     }

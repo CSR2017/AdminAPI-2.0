@@ -3,7 +3,6 @@
 // The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 // See the LICENSE and NOTICES files in the project root for more information.
 
-using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
 using EdFi.AdminConsole.HealthCheckService.Features.OdsApi;
 using EdFi.AdminConsole.HealthCheckService.Helpers;
 using Microsoft.Extensions.Hosting;
@@ -13,6 +12,12 @@ using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Tenants;
 using AutoMapper;
 using System.Dynamic;
 using EdFi.Ods.AdminApi.AdminConsole.Features.Tenants;
+using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.DataAccess.Models;
+using EdFi.Ods.AdminApi.AdminConsole.Features.WorkerInstances;
+using Newtonsoft.Json;
+using System.Text;
+using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.HealthChecks.Commands;
+using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
 
 namespace EdFi.AdminConsole.HealthCheckService;
 
@@ -22,17 +27,17 @@ public interface IApplication
 }
 
 public class Application(ILogger logger,
-    IMapper mapper,
     IAdminConsoleTenantsService adminConsoleTenantsService,
     IGetInstancesQuery getInstancesQuery,
+    IAddHealthCheckCommand addHealthCheckCommand,
     IOdsApiCaller odsApiCaller)
     : IApplication, IHostedService
 {
     private readonly ILogger _logger = logger;
-    private readonly IMapper _mapper = mapper;
     private readonly IAdminConsoleTenantsService _adminConsoleTenantsService = adminConsoleTenantsService;
     private readonly IGetInstancesQuery _getInstancesQuery = getInstancesQuery;
     private readonly IOdsApiCaller _odsApiCaller = odsApiCaller;
+    private readonly IAddHealthCheckCommand _addHealthCheckCommand = addHealthCheckCommand;
 
     public async Task Run()
     {
@@ -45,10 +50,12 @@ public class Application(ILogger logger,
             _logger.LogInformation("No tenants returned from Admin Api.");
         else
         {
-            foreach (var tenantName in tenants.Select(tenant => GetTenantName(tenant)))
+            foreach (var tenantName in tenants.Select(GetTenantName))
             {
+                _logger.LogInformation("TenantName:{TenantName}", tenantName);
+
                 /// Step 2. Get instances data from Admin API - Admin Console extension.
-                var instances = await _getInstancesQuery.Execute(tenantName);
+                var instances = await _getInstancesQuery.Execute(tenantName, "Completed");
 
                 if (instances == null || !instances.Any())
                 {
@@ -63,36 +70,34 @@ public class Application(ILogger logger,
                             "Processing instance with name: {InstanceName}",
                             instance.InstanceName ?? "<No Name>"
                         );
-
-                        if (InstanceValidator.IsInstanceValid(_logger, instance))
+                        var adminConsoleInstance = ConvertToAdminConsoleInstance(instance);
+                        if (InstanceValidator.IsInstanceValid(_logger, adminConsoleInstance))
                         {
-                            //var healthCheckData = await _odsApiCaller.GetHealthCheckDataAsync(instance);
+                            var healthCheckData = await _odsApiCaller.GetHealthCheckDataAsync(adminConsoleInstance);
 
-                            //if (healthCheckData != null && healthCheckData.Count > 0)
-                            //{
-                            //    _logger.LogInformation("HealCheck data obtained.");
+                            if (healthCheckData != null && healthCheckData.Count > 0)
+                            {
+                                _logger.LogInformation("HealCheck data obtained.");
 
-                            //    var healthCheckDocument = JsonBuilder.BuildJsonObject(healthCheckData);
+                                var healthCheckDocument = JsonBuilder.BuildJsonObject(healthCheckData);
 
-                            //    /// Step 4. Post the HealthCheck data to the Admin API
-                            //    var healthCheckPayload = new AdminApiHealthCheckPost()
-                            //    {
-                            //        TenantId = instance.TenantId,
-                            //        InstanceId = instance.Id,
-                            //        Document = healthCheckDocument.ToString(),
-                            //    };
+                                /// Step 4. Post the HealthCheck data to the Admin API
+                                HealthCheckCommandModel healthCheckCommandModel = new(
+                                    instance.TenantId,
+                                    instance.Id,
+                                    healthCheckDocument.ToString()
+                                );
+                                _logger.LogInformation("Posting HealthCheck data to Admin Api.");
 
-                            //    _logger.LogInformation("Posting HealthCheck data to Admin Api.");
-
-                            //    await _adminApiCaller.PostHealthCheckAsync(healthCheckPayload, tenantName);
-                            //}
-                            //else
-                            //{
-                            //    _logger.LogInformation(
-                            //        "No HealthCheck data has been collected for instance with name: {InstanceName}",
-                            //        instance.InstanceName
-                            //    );
-                            //}
+                                await _addHealthCheckCommand.Execute(healthCheckCommandModel);
+                            }
+                            else
+                            {
+                                _logger.LogInformation(
+                                    "No HealthCheck data has been collected for instance with name: {InstanceName}",
+                                    instance.InstanceName
+                                );
+                            }
                         }
                     }
                 }
@@ -103,15 +108,36 @@ public class Application(ILogger logger,
 
         static string GetTenantName(TenantModel tenant)
         {
-            if (tenant.Document is ExpandoObject expandoObject)
+            if (tenant.Document is ExpandoObject expandoObject &&
+                expandoObject is IDictionary<string, object> dict &&
+                dict.TryGetValue("name", out var nameValue) &&
+                nameValue is string name)
             {
-                var dict = expandoObject as IDictionary<string, object>;
-                if (dict != null && dict.TryGetValue("name", out var nameValue) && nameValue is string name)
-                {
-                    return name;
-                }
+                return name;
             }
             return string.Empty;
+        }
+
+        static AdminConsoleInstance ConvertToAdminConsoleInstance(Instance instance)
+        {
+            string? ClientId = null;
+            string? ClientSecret = null;
+
+            if (instance.Credentials != null)
+            {
+                var credentials = JsonConvert.DeserializeObject<InstanceWorkerModelDto>(Encoding.UTF8.GetString(instance.Credentials));
+                ClientId = credentials?.ClientId;
+                ClientSecret = credentials?.Secret;
+            }
+
+            return new AdminConsoleInstance
+            {
+                Id = instance.Id,
+                ResourceUrl = instance.ResourceUrl ?? string.Empty,
+                OauthUrl = instance.OAuthUrl ?? string.Empty,
+                ClientId = ClientId ?? string.Empty,
+                ClientSecret = ClientSecret ?? string.Empty
+            };
         }
     }
 
@@ -124,4 +150,13 @@ public class Application(ILogger logger,
     {
         await Task.CompletedTask;
     }
+}
+
+public class HealthCheckCommandModel(int tenantId, int instanceId, string document) : IAddHealthCheckModel
+{
+    public int TenantId { get; set; } = tenantId;
+    public int InstanceId { get; set; } = instanceId;
+    public string Document { get; set; } = document;
+    public int DocId => throw new NotImplementedException();
+    public int EdOrgId => throw new NotImplementedException();
 }

@@ -230,7 +230,7 @@ public static class WebApplicationBuilderExtensions
                 .ForJob(jobKey)
                 .WithIdentity("HealthCheckJob-trigger")
                 .WithSimpleSchedule(x => x
-                    .WithInterval(TimeSpan.FromMinutes(10))
+                    .WithInterval(TimeSpan.FromMinutes(2))
                     .RepeatForever())
             );
         });
