@@ -85,6 +85,8 @@ services:
       PGBOUNCER_SET_DATABASE_USER: "yes"
       PGBOUNCER_SET_DATABASE_PASSWORD: "yes"
     restart: always
+    ports:
+      - "6401:6432"
     container_name: ed-fi-pb-ods-tenant1
     depends_on:
       - db-ods-tenant1
@@ -102,6 +104,8 @@ services:
       PGBOUNCER_SET_DATABASE_PASSWORD: "yes"
     restart: always
     container_name: ed-fi-pb-ods-tenant2
+    ports:
+      - "6402:6432"
     depends_on:
       - db-ods-tenant2
 

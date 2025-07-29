@@ -157,6 +157,6 @@ public class HealthCheckCommandModel(int tenantId, int instanceId, string docume
     public int TenantId { get; set; } = tenantId;
     public int InstanceId { get; set; } = instanceId;
     public string Document { get; set; } = document;
-    public int DocId => throw new NotImplementedException();
-    public int EdOrgId => throw new NotImplementedException();
+    public int DocId { get; set; }
+    public int EdOrgId { get; set; }
 }
