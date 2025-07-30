@@ -3,45 +3,34 @@
 // The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 // See the LICENSE and NOTICES files in the project root for more information.
 
-using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
+using EdFi.AdminConsole.HealthCheckService;
 using EdFi.AdminConsole.HealthCheckService.Features.OdsApi;
 using EdFi.AdminConsole.HealthCheckService.Infrastructure;
-using EdFi.AdminConsole.HealthCheckService;
-using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Tenants;
-using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Instances.Queries;
 using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.HealthChecks.Commands;
 
 namespace EdFi.Ods.AdminApi.Infrastructure.BackgroundJobs;
 
 public static class HealthCheckServiceExtension
 {
-    public static IServiceCollection ConfigureHealthCheckServices(
-       this IServiceCollection services,
-       IConfiguration configuration
-   )
+    public static void ConfigureHealthCheckServices(
+        this WebApplicationBuilder builder,
+        IConfiguration configuration
+    )
     {
-        services.AddOptions();
-        services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
-        services.Configure<OdsApiSettings>(configuration.GetSection("OdsApiSettings"));
+        builder.Services.AddOptions();
+        builder.Services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+        builder.Services.Configure<OdsApiSettings>(configuration.GetSection("OdsApiSettings"));
 
-#pragma warning disable CS8603 // Possible null reference return.
-        services.AddSingleton<ILogger>(sp => sp.GetService<ILogger<Application>>());
-#pragma warning restore CS8603 // Possible null reference return.
+        builder.Services.AddSingleton<IAppSettingsOdsApiEndpoints, AppSettingsOdsApiEndpoints>();
+        builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 
-        services.AddSingleton<IAppSettingsOdsApiEndpoints, AppSettingsOdsApiEndpoints>();
-        services.AddScoped<IApplication, Application>();
+        builder.Services.AddTransient<IHttpRequestMessageBuilder, HttpRequestMessageBuilder>();
+        builder.Services.AddTransient<IAddHealthCheckCommand, AddHealthCheckCommand>();
 
-        services.AddTransient<IHttpRequestMessageBuilder, HttpRequestMessageBuilder>();
-        services.AddTransient<IAdminConsoleTenantsService, TenantService>();
-        services.AddTransient<IGetInstancesQuery, GetInstancesQuery>();
-        services.AddTransient<IAddHealthCheckCommand, AddHealthCheckCommand>();
+        builder.Services.AddTransient<IOdsApiClient, OdsApiClient>();
+        builder.Services.AddTransient<IOdsApiCaller, OdsApiCaller>();
 
-        services.AddTransient<IOdsApiClient, OdsApiClient>();
-        services.AddTransient<IOdsApiCaller, OdsApiCaller>();
-
-        services.AddTransient<IHostedService, Application>();
-
-        services
+        builder.Services
             .AddHttpClient<IAppHttpClient, AppHttpClient>(
                 "AppHttpClient",
                 x =>
@@ -60,8 +49,6 @@ public static class HealthCheckServiceExtension
                 }
                 return handler;
             });
-
-        return services;
     }
 
     private static HttpClientHandler IgnoresCertificateErrorsHandler()

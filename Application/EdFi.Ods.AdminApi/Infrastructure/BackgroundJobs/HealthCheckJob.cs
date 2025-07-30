@@ -8,14 +8,14 @@ using Quartz;
 
 namespace EdFi.Ods.AdminApi.Infrastructure.BackgroundJobs;
 
-public class HealthCheckJob(IApplication application, ILogger<HealthCheckJob> logger) : IJob
+public class HealthCheckJob(IHealthCheckService healthCheckService, ILogger<HealthCheckJob> logger) : IJob
 {
-    private readonly IApplication _application = application;
+    private readonly IHealthCheckService _healthCheckService = healthCheckService;
     private readonly ILogger<HealthCheckJob> _logger = logger;
 
     public async Task Execute(IJobExecutionContext context)
     {
         _logger.LogInformation("Running scheduled health check...");
-        await _application.Run();
+        await _healthCheckService.Run();
     }
 }

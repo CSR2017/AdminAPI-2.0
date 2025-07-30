@@ -46,7 +46,7 @@ public static class Testing
         return Options.Create(appSettings);
     }
 
-    public static IOptionsSnapshot<AppSettingsFile> GetOptionsSnapshot()
+    public static IOptionsMonitor<AppSettingsFile> GetOptionsSnapshot()
     {
         var appSettingsFile = new AppSettingsFile
         {
@@ -100,8 +100,8 @@ public static class Testing
             }
         };
 
-        var optionsSnapshot = A.Fake<IOptionsSnapshot<AppSettingsFile>>();
-        A.CallTo(() => optionsSnapshot.Value).Returns(appSettingsFile);
+        var optionsSnapshot = A.Fake<IOptionsMonitor<AppSettingsFile>>();
+        A.CallTo(() => optionsSnapshot.CurrentValue).Returns(appSettingsFile);
         return optionsSnapshot;
     }
 

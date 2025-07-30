@@ -5,11 +5,9 @@
 
 using EdFi.AdminConsole.HealthCheckService.Features.OdsApi;
 using EdFi.AdminConsole.HealthCheckService.Helpers;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Instances.Queries;
 using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Tenants;
-using AutoMapper;
 using System.Dynamic;
 using EdFi.Ods.AdminApi.AdminConsole.Features.Tenants;
 using EdFi.Ods.AdminApi.AdminConsole.Infrastructure.DataAccess.Models;
@@ -21,17 +19,17 @@ using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
 
 namespace EdFi.AdminConsole.HealthCheckService;
 
-public interface IApplication
+public interface IHealthCheckService
 {
     Task Run();
 }
 
-public class Application(ILogger logger,
+public class HealthCheckService(ILogger<HealthCheckService> logger,
     IAdminConsoleTenantsService adminConsoleTenantsService,
     IGetInstancesQuery getInstancesQuery,
     IAddHealthCheckCommand addHealthCheckCommand,
     IOdsApiCaller odsApiCaller)
-    : IApplication, IHostedService
+    : IHealthCheckService
 {
     private readonly ILogger _logger = logger;
     private readonly IAdminConsoleTenantsService _adminConsoleTenantsService = adminConsoleTenantsService;
@@ -41,69 +39,76 @@ public class Application(ILogger logger,
 
     public async Task Run()
     {
-        /// Step 1. Get tenants data from Admin API - Admin Console extension.
-        _logger.LogInformation("Starting HealthCheck Service...");
-        _logger.LogInformation("Get tenants on Admin Api.");
-        var tenants = await _adminConsoleTenantsService.GetTenantsAsync(true);
-
-        if (!tenants.Any())
-            _logger.LogInformation("No tenants returned from Admin Api.");
-        else
+        try
         {
-            foreach (var tenantName in tenants.Select(GetTenantName))
+            /// Step 1. Get tenants data from Admin API - Admin Console extension.
+            _logger.LogInformation("Starting HealthCheck Service...");
+            _logger.LogInformation("Get tenants on Admin Api.");
+            var tenants = await _adminConsoleTenantsService.GetTenantsAsync(true);
+
+            if (tenants.Count == 0)
+                _logger.LogInformation("No tenants returned from Admin Api.");
+            else
             {
-                _logger.LogInformation("TenantName:{TenantName}", tenantName);
-
-                /// Step 2. Get instances data from Admin API - Admin Console extension.
-                var instances = await _getInstancesQuery.Execute(tenantName, "Completed");
-
-                if (instances == null || !instances.Any())
+                foreach (var tenantName in tenants.Select(GetTenantName))
                 {
-                    _logger.LogInformation("No instances found on Admin Api.");
-                }
-                else
-                {
-                    foreach (var instance in instances)
+                    _logger.LogInformation("TenantName:{TenantName}", tenantName);
+
+                    /// Step 2. Get instances data from Admin API - Admin Console extension.
+                    var instances = await _getInstancesQuery.Execute(tenantName, "Completed");
+
+                    if (instances == null || !instances.Any())
                     {
-                        /// Step 3. For each instance, Get the HealthCheck data from ODS API
-                        _logger.LogInformation(
-                            "Processing instance with name: {InstanceName}",
-                            instance.InstanceName ?? "<No Name>"
-                        );
-                        var adminConsoleInstance = ConvertToAdminConsoleInstance(instance);
-                        if (InstanceValidator.IsInstanceValid(_logger, adminConsoleInstance))
+                        _logger.LogInformation("No instances found on Admin Api.");
+                    }
+                    else
+                    {
+                        foreach (var instance in instances)
                         {
-                            var healthCheckData = await _odsApiCaller.GetHealthCheckDataAsync(adminConsoleInstance);
-
-                            if (healthCheckData != null && healthCheckData.Count > 0)
+                            /// Step 3. For each instance, Get the HealthCheck data from ODS API
+                            _logger.LogInformation(
+                                "Processing instance with name: {InstanceName}",
+                                instance.InstanceName ?? "<No Name>"
+                            );
+                            var adminConsoleInstance = ConvertToAdminConsoleInstance(instance);
+                            if (InstanceValidator.IsInstanceValid(_logger, adminConsoleInstance))
                             {
-                                _logger.LogInformation("HealCheck data obtained.");
+                                var healthCheckData = await _odsApiCaller.GetHealthCheckDataAsync(adminConsoleInstance);
 
-                                var healthCheckDocument = JsonBuilder.BuildJsonObject(healthCheckData);
+                                if (healthCheckData != null && healthCheckData.Count > 0)
+                                {
+                                    _logger.LogInformation("HealCheck data obtained.");
 
-                                /// Step 4. Post the HealthCheck data to the Admin API
-                                HealthCheckCommandModel healthCheckCommandModel = new(
-                                    instance.TenantId,
-                                    instance.Id,
-                                    healthCheckDocument.ToString()
-                                );
-                                _logger.LogInformation("Posting HealthCheck data to Admin Api.");
+                                    var healthCheckDocument = JsonBuilder.BuildJsonObject(healthCheckData);
 
-                                await _addHealthCheckCommand.Execute(healthCheckCommandModel);
-                            }
-                            else
-                            {
-                                _logger.LogInformation(
-                                    "No HealthCheck data has been collected for instance with name: {InstanceName}",
-                                    instance.InstanceName
-                                );
+                                    /// Step 4. Post the HealthCheck data to the Admin API
+                                    HealthCheckCommandModel healthCheckCommandModel = new(
+                                        instance.TenantId,
+                                        instance.Id,
+                                        healthCheckDocument.ToString()
+                                    );
+                                    _logger.LogInformation("Posting HealthCheck data to Admin Api.");
+
+                                    await _addHealthCheckCommand.Execute(healthCheckCommandModel);
+                                }
+                                else
+                                {
+                                    _logger.LogInformation(
+                                        "No HealthCheck data has been collected for instance with name: {InstanceName}",
+                                        instance.InstanceName
+                                    );
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            _logger.LogInformation("Process completed.");
+                _logger.LogInformation("Process completed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while running the HealthCheck Service.");
         }
 
         static string GetTenantName(TenantModel tenant)
@@ -139,16 +144,6 @@ public class Application(ILogger logger,
                 ClientSecret = ClientSecret ?? string.Empty
             };
         }
-    }
-
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        await Run();
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await Task.CompletedTask;
     }
 }
 

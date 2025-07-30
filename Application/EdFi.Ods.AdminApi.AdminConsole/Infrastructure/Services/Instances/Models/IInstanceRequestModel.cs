@@ -17,7 +17,7 @@ namespace EdFi.Ods.AdminApi.AdminConsole.Infrastructure.Services.Instances.Model
         ICollection<OdsInstanceDerivativeModel>? OdsInstanceDerivatives { get; }
 
         byte[]? Credentials { get; }
-        public string? Status { get; set; }
+        string? Status { get; set; }
     }
 
     public class OdsInstanceContextModel

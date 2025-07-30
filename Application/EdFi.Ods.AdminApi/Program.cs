@@ -9,6 +9,7 @@ using EdFi.Ods.AdminApi.Common.Infrastructure;
 using EdFi.Ods.AdminApi.Common.Infrastructure.MultiTenancy;
 using EdFi.Ods.AdminApi.Features;
 using EdFi.Ods.AdminApi.Infrastructure;
+using EdFi.Ods.AdminApi.Infrastructure.BackgroundJobs;
 using log4net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +26,10 @@ if (adminConsoleIsEnabled)
 builder.AddServices();
 
 if (adminConsoleIsEnabled)
+{
     builder.RegisterAdminConsoleDependencies();
+    builder.ConfigureHealthCheckServices(builder.Configuration);
+}
 
 var app = builder.Build();
 

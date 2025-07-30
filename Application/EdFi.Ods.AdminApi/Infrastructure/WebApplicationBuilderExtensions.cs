@@ -215,27 +215,25 @@ public static class WebApplicationBuilderExtensions
         webApplicationBuilder.Services.AddTransient<ISimpleGetRequest, SimpleGetRequest>();
         webApplicationBuilder.Services.AddTransient<IOdsApiValidator, OdsApiValidator>();
 
-        webApplicationBuilder.Services.ConfigureHealthCheckServices(
-            webApplicationBuilder.Configuration
-        );
+        var adminConsoleIsEnabled = webApplicationBuilder.Configuration.GetValue<bool>("AppSettings:EnableAdminConsoleAPI");
 
-        // Quartz.NET back end service
-        webApplicationBuilder.Services.AddQuartz(q =>
+        if (adminConsoleIsEnabled)
         {
-            var jobKey = new JobKey("HealthCheckJob");
-            q.AddJob<HealthCheckJob>(opts => opts.WithIdentity(jobKey));
+            // Quartz.NET back end service
+            webApplicationBuilder.Services.AddQuartz(q =>
+            {
+                var jobKey = new JobKey("HealthCheckJob");
+                q.AddJob<HealthCheckJob>(opts => opts.WithIdentity(jobKey));
 
-            // Create a trigger that fires every 10 minutes
-            q.AddTrigger(opts => opts
-                .ForJob(jobKey)
-                .WithIdentity("HealthCheckJob-trigger")
-                .WithSimpleSchedule(x => x
-                    .WithInterval(TimeSpan.FromMinutes(2))
-                    .RepeatForever())
-            );
-        });
-
-        webApplicationBuilder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+                // Create a trigger that fires every 10 minutes
+                q.AddTrigger(opts =>
+                    opts.ForJob(jobKey)
+                        .WithIdentity("HealthCheckJob-trigger")
+                        .WithSimpleSchedule(x => x.WithInterval(TimeSpan.FromMinutes(2)).RepeatForever())
+                );
+            });
+            webApplicationBuilder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+        }
     }
 
     private static void EnableMultiTenancySupport(this WebApplicationBuilder webApplicationBuilder)
@@ -448,7 +446,12 @@ public static class WebApplicationBuilderExtensions
                         var parts = rule.Endpoint.Split(':');
                         // Only support fixed window for now, parse period (e.g., "1m")
                         var window = rule.Period.EndsWith('m') ? TimeSpan.FromMinutes(int.Parse(rule.Period.TrimEnd('m'))) : TimeSpan.FromMinutes(1);
-                        if (path != null && parts.Length == 2 && method.Equals(parts[0], StringComparison.OrdinalIgnoreCase) && path.Equals(parts[1], StringComparison.OrdinalIgnoreCase))
+                        if (
+                            path != null
+                            && parts.Length == 2
+                            && method.Equals(parts[0], StringComparison.OrdinalIgnoreCase)
+                            && path.Equals(parts[1], StringComparison.OrdinalIgnoreCase)
+                        )
                         {
                             return RateLimitPartition.GetFixedWindowLimiter(rule.Endpoint, _ => new FixedWindowRateLimiterOptions
                             {

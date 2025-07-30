@@ -4,14 +4,12 @@
 // See the LICENSE and NOTICES files in the project root for more information.
 
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using EdFi.AdminConsole.HealthCheckService.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
-using Serilog.Core;
 using Constants = EdFi.AdminConsole.HealthCheckService.Helpers.Constants;
 
 namespace EdFi.AdminConsole.HealthCheckService.Infrastructure;
@@ -23,10 +21,10 @@ public interface IAppHttpClient
     Task<ApiResponse> SendAsync(string uriString, HttpMethod method, FormUrlEncodedContent content, AuthenticationHeaderValue? authenticationHeaderValue);
 }
 
-public class AppHttpClient(HttpClient httpClient, ILogger logger, IOptions<AppSettings> options) : IAppHttpClient
+public class AppHttpClient(HttpClient httpClient, ILogger<AppHttpClient> logger, IOptions<AppSettings> options) : IAppHttpClient
 {
     private readonly HttpClient _httpClient = httpClient;
-    protected readonly ILogger _logger = logger;
+    protected readonly ILogger<AppHttpClient> _logger = logger;
     protected readonly AppSettings _options = options.Value;
 
     public async Task<ApiResponse> SendAsync(string uriString, HttpMethod method, StringContent? content, AuthenticationHeaderValue? authenticationHeaderValue)

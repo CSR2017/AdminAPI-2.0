@@ -3,7 +3,6 @@
 // The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 // See the LICENSE and NOTICES files in the project root for more information.
 
-using System;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -22,14 +21,14 @@ public interface IOdsApiClient
 public class OdsApiClient : IOdsApiClient
 {
     private readonly IAppHttpClient _appHttpClient;
-    protected readonly ILogger _logger;
+    protected readonly ILogger<OdsApiClient> _logger;
     protected readonly AppSettings _options;
 
     private string _accessToken;
 
     public OdsApiClient(
         IAppHttpClient appHttpClient,
-        ILogger logger,
+        ILogger<OdsApiClient> logger,
         IOptions<AppSettings> options
     )
     {

@@ -5,7 +5,6 @@
 
 using EdFi.AdminConsole.HealthCheckService.Features.AdminApi;
 using EdFi.AdminConsole.HealthCheckService.Helpers;
-using Microsoft.Extensions.Logging;
 
 namespace EdFi.AdminConsole.HealthCheckService.Features.OdsApi;
 

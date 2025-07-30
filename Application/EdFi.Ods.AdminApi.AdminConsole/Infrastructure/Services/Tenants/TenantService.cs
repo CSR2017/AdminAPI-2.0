@@ -21,11 +21,11 @@ public interface IAdminConsoleTenantsService
     Task<TenantModel?> GetTenantByTenantIdAsync(int tenantId);
 }
 
-public class TenantService(IOptionsSnapshot<AppSettingsFile> options,
-    IMemoryCache memoryCache) : IAdminConsoleTenantsService
+public class TenantService(IOptionsMonitor<AppSettingsFile> options, IMemoryCache memoryCache)
+    : IAdminConsoleTenantsService
 {
     private const string ADMIN_DB_KEY = "EdFi_Admin";
-    protected AppSettingsFile _appSettings = options.Value;
+    protected AppSettingsFile _appSettings = options.CurrentValue;
     private readonly IMemoryCache _memoryCache = memoryCache;
     private static readonly ILog _log = LogManager.GetLogger(typeof(TenantService));
 
