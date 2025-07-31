@@ -5,13 +5,7 @@
 
 namespace EdFi.AdminConsole.HealthCheckService;
 
-public interface IAppSettings
+public sealed class AppSettings
 {
-    bool IgnoresCertificateErrors { get; set; }
-}
-
-public sealed class AppSettings : IAppSettings
-{
-    public bool IgnoresCertificateErrors { get; set; } = false;
     public int MaxRetryAttempts { get; set; }
 }

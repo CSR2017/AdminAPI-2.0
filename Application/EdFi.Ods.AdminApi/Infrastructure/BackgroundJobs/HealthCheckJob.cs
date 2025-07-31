@@ -8,6 +8,7 @@ using Quartz;
 
 namespace EdFi.Ods.AdminApi.Infrastructure.BackgroundJobs;
 
+[DisallowConcurrentExecution]
 public class HealthCheckJob(IHealthCheckService healthCheckService, ILogger<HealthCheckJob> logger) : IJob
 {
     private readonly IHealthCheckService _healthCheckService = healthCheckService;
@@ -16,6 +17,6 @@ public class HealthCheckJob(IHealthCheckService healthCheckService, ILogger<Heal
     public async Task Execute(IJobExecutionContext context)
     {
         _logger.LogInformation("Running scheduled health check...");
-        await _healthCheckService.Run();
+        await _healthCheckService.RunAsync(context.CancellationToken);
     }
 }

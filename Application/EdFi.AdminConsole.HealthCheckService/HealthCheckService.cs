@@ -21,7 +21,7 @@ namespace EdFi.AdminConsole.HealthCheckService;
 
 public interface IHealthCheckService
 {
-    Task Run();
+    Task RunAsync(CancellationToken cancellationToken);
 }
 
 public class HealthCheckService(ILogger<HealthCheckService> logger,
@@ -37,7 +37,7 @@ public class HealthCheckService(ILogger<HealthCheckService> logger,
     private readonly IOdsApiCaller _odsApiCaller = odsApiCaller;
     private readonly IAddHealthCheckCommand _addHealthCheckCommand = addHealthCheckCommand;
 
-    public async Task Run()
+    public async Task RunAsync(CancellationToken cancellationToken)
     {
         try
         {

@@ -216,6 +216,7 @@ public static class WebApplicationBuilderExtensions
         webApplicationBuilder.Services.AddTransient<IOdsApiValidator, OdsApiValidator>();
 
         var adminConsoleIsEnabled = webApplicationBuilder.Configuration.GetValue<bool>("AppSettings:EnableAdminConsoleAPI");
+        var healthCheckFrequency = webApplicationBuilder.Configuration.GetValue<int>("AppSettings:HealthCheckFrequencyInMinutes");
 
         if (adminConsoleIsEnabled)
         {
@@ -229,10 +230,10 @@ public static class WebApplicationBuilderExtensions
                 q.AddTrigger(opts =>
                     opts.ForJob(jobKey)
                         .WithIdentity("HealthCheckJob-trigger")
-                        .WithSimpleSchedule(x => x.WithInterval(TimeSpan.FromMinutes(2)).RepeatForever())
+                        .WithSimpleSchedule(x => x.WithInterval(TimeSpan.FromMinutes(healthCheckFrequency)).RepeatForever())
                 );
             });
-            webApplicationBuilder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+            webApplicationBuilder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = false);
         }
     }
 
