@@ -184,6 +184,57 @@ For local development and testing with keycloak, use `MultiTenant/compose-build-
 For testing pre-built binaries, use `MultiTenant/compose-build-binaries-multi-tenant.yml`.
 For testing pre-built binaries with keycloak, use `MultiTenant/compose-build-idp-binaries-multi-tenant.yml`.
 
+### Multi-Tenant PowerShell Setup Script
+
+The project includes a PowerShell script to simplify multi-tenant Docker environment setup. The script automatically handles multiple compose files and provides comprehensive environment management.
+
+**Location:** `\eng\setup-local-multi-tenants-docker.ps1`
+
+**Features:**
+
+* Automatically runs multiple compose files together
+* Validates prerequisites (Docker, compose files, environment)
+* Provides health checks and status monitoring
+* Supports build, start, stop, and log operations
+* Uses the `.env` file for configuration
+
+**Usage Examples:**
+
+1. **Start multi-tenant environment:**
+
+   ```powershell
+   .\eng\setup-local-multi-tenants-docker.ps1
+   ```
+
+2. **Build and start containers:**
+
+   ```powershell
+   .\eng\setup-local-multi-tenants-docker.ps1 -Build
+   ```
+
+3. **Start with log monitoring:**
+
+   ```powershell
+   .\eng\setup-local-multi-tenants-docker.ps1 -Logs
+   ```
+
+4. **Stop all containers:**
+
+   ```powershell
+   .\eng\setup-local-multi-tenants-docker.ps1 -Down
+   ```
+
+5. **Use custom environment file:**
+
+   ```powershell
+   .\eng\setup-local-multi-tenants-docker.ps1 -EnvFile "custom.env"
+   ```
+
+**Script combines these compose files:**
+
+* `MultiTenant/compose-build-dev-multi-tenant.yml`
+* `MultiTenant/compose-build-ods-multi-tenant.yml`
+
 ## Admin Api and Ed-Fi ODS / API docker containers
 
 Please refer [DOCKER DEPLOYMENT](https://techdocs.ed-fi.org/display/EDFITOOLS/Docker+Deployment) for

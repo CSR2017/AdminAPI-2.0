@@ -15,22 +15,19 @@
 #>
 
 param(
-    [string]$EnvFile = ".env",
+    [string]$EnvFile = "..\Docker\Compose\pgsql\.env",
     [switch]$Down,
     [switch]$Build,
     [switch]$Logs
 )
 
-# Set error action preference
 $ErrorActionPreference = "Stop"
 
-# Define paths
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ComposeDir = Join-Path $ScriptDir "Docker\Compose\pgsql\MultiTenant"
+$ComposeDir = Join-Path $ScriptDir "..\Docker\Compose\pgsql\MultiTenant"
 $OdsComposeFile = Join-Path $ComposeDir "compose-build-ods-multi-tenant.yml"
 $DevComposeFile = Join-Path $ComposeDir "compose-build-dev-multi-tenant.yml"
 
-# Function to check if Docker is running
 function Test-DockerRunning {
     try {
         docker info | Out-Null
@@ -41,7 +38,6 @@ function Test-DockerRunning {
     }
 }
 
-# Function to check if file exists
 function Test-FileExists {
     param([string]$FilePath, [string]$Description)
 
@@ -52,7 +48,6 @@ function Test-FileExists {
     Write-Host "✓ Found $Description" -ForegroundColor Green
 }
 
-# Function to run Docker Compose command with multiple files
 function Invoke-MultiDockerCompose {
     param(
         [string[]]$ComposeFiles,
@@ -70,8 +65,6 @@ function Invoke-MultiDockerCompose {
         $cmd += " -f `"$file`""
         Write-Host "Using compose file: $file" -ForegroundColor Gray
     }
-
-    # Add environment file if it exists
     if (Test-Path $EnvFile) {
         $cmd += " --env-file `"$EnvFile`""
         Write-Host "Using environment file: $EnvFile" -ForegroundColor Gray
@@ -95,35 +88,30 @@ function Invoke-MultiDockerCompose {
     }
 }
 
-# Main execution
 try {
     Write-Host "=== Ed-Fi AdminAPI Multi-Tenant Docker Setup ===" -ForegroundColor Yellow
     Write-Host "Timestamp: $(Get-Date)" -ForegroundColor Gray
 
-    # Verify prerequisites
     Write-Host "Checking prerequisites..." -ForegroundColor Cyan
 
     if (-not (Test-DockerRunning)) {
         Write-Error "Docker is not running. Please start Docker Desktop and try again."
         exit 1
     }
-    Write-Host "✓ Docker is running" -ForegroundColor Green
+    Write-Host "Docker is running" -ForegroundColor Green
 
-    # Check if docker-compose is available
     try {
         docker-compose --version | Out-Null
-        Write-Host "✓ Docker Compose is available" -ForegroundColor Green
+        Write-Host "Docker Compose is available" -ForegroundColor Green
     }
     catch {
         Write-Error "Docker Compose is not available. Please install Docker Compose."
         exit 1
     }
 
-    # Verify compose files exist
     Test-FileExists -FilePath $DevComposeFile -Description "Dev compose file"
     Test-FileExists -FilePath $OdsComposeFile -Description "ODS compose file"
 
-    # Check environment file
     if (Test-Path $EnvFile) {
         Write-Host "Using environment file: $EnvFile" -ForegroundColor Green
     } else {
@@ -135,7 +123,6 @@ try {
     $ComposeFiles = @($DevComposeFile, $OdsComposeFile)
 
     if ($Down) {
-        # Bring down containers
         Write-Host "Bringing down containers..." -ForegroundColor Red
 
         Invoke-MultiDockerCompose -ComposeFiles $ComposeFiles -Command "down --remove-orphans --volumes" -Description "Stopping all containers and removing volumes"
@@ -143,37 +130,29 @@ try {
         Write-Host "All containers have been stopped and removed" -ForegroundColor Green
     }
     else {
-        # Start containers
         Write-Host "Starting multi-tenant environment..." -ForegroundColor Green
-
-        # Build command
         $upCommand = "up -d"
         if ($Build) {
             $upCommand += " --build"
             Write-Host "Building containers..." -ForegroundColor Yellow
         }
 
-        # Start all containers together
         Invoke-MultiDockerCompose -ComposeFiles $ComposeFiles -Command $upCommand -Description "Starting multi-tenant containers"
 
-        # Wait for all services to be ready
         Write-Host "Waiting for all services to be ready..." -ForegroundColor Yellow
         Start-Sleep -Seconds 20
 
-        # Show container status
         Write-Host "Container Status:" -ForegroundColor Cyan
         docker ps --filter "name=ed-fi" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-        # Check health of containers
-        Write-Host "`Health Check:" -ForegroundColor Cyan
+        Write-Host "Health Check:" -ForegroundColor Cyan
         $unhealthyContainers = docker ps --filter "name=ed-fi" --filter "health=unhealthy" --format "{{.Names}}"
         if ($unhealthyContainers) {
             Write-Warning "Some containers are unhealthy: $unhealthyContainers"
         } else {
-            Write-Host "✓ All containers appear healthy" -ForegroundColor Green
+            Write-Host "All containers appear healthy" -ForegroundColor Green
         }
 
-        # Show logs if requested
         if ($Logs) {
             Write-Host "Container Logs:" -ForegroundColor Cyan
             Write-Host "Press Ctrl+C to stop following logs..." -ForegroundColor Gray
@@ -192,24 +171,9 @@ try {
         }
 
         Write-Host "Multi-tenant environment setup completed!" -ForegroundColor Green
-        Write-Host "Access points:" -ForegroundColor Cyan
-        Write-Host "  • AdminAPI: http://localhost:5001" -ForegroundColor White
-        Write-Host "  • Swagger: http://localhost:5001/swagger" -ForegroundColor White
-        Write-Host "  • Health: http://localhost:5001/health" -ForegroundColor White
-        Write-Host "Useful commands:" -ForegroundColor Cyan
-        Write-Host "  • View logs: .\setup-local.ps1 -Logs" -ForegroundColor White
-        Write-Host "  • Stop all: .\setup-local.ps1 -Down" -ForegroundColor White
-        Write-Host "  • Rebuild: .\setup-local.ps1 -Build" -ForegroundColor White
-        Write-Host "  • Status: docker ps --filter name=ed-fi" -ForegroundColor White
     }
 }
 catch {
     Write-Error "Script execution failed: $_"
-    Write-Host "Troubleshooting tips:" -ForegroundColor Yellow
-    Write-Host "  1. Ensure Docker Desktop is running" -ForegroundColor White
-    Write-Host "  2. Check if ports 5001, 5432 are available" -ForegroundColor White
-    Write-Host "  3. Verify .env file contains required variables" -ForegroundColor White
-    Write-Host "  4. Try running with -Build flag to rebuild containers" -ForegroundColor White
-    Write-Host "  5. Check container logs: docker-compose -f Dev -f ODS logs" -ForegroundColor White
     exit 1
 }
