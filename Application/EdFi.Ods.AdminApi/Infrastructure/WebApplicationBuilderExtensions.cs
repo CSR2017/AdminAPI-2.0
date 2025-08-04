@@ -216,9 +216,11 @@ public static class WebApplicationBuilderExtensions
         webApplicationBuilder.Services.AddTransient<IOdsApiValidator, OdsApiValidator>();
 
         var adminConsoleIsEnabled = webApplicationBuilder.Configuration.GetValue<bool>("AppSettings:EnableAdminConsoleAPI");
-        var healthCheckFrequency = webApplicationBuilder.Configuration.GetValue<int>("AppSettings:HealthCheckFrequencyInMinutes");
+        var healthCheckFrequency = webApplicationBuilder.Configuration.GetValue<int>("HealthCheck:HealthCheckFrequencyInMinutes");
 
-        if (adminConsoleIsEnabled)
+        // Schedule the health check job if the Admin Console API is enabled and
+        // the health check frequency is greater than zero.
+        if (adminConsoleIsEnabled && healthCheckFrequency > 0)
         {
             // Quartz.NET back end service
             webApplicationBuilder.Services.AddQuartz(q =>

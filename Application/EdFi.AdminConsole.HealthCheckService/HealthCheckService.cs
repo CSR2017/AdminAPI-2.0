@@ -31,7 +31,7 @@ public class HealthCheckService(ILogger<HealthCheckService> logger,
     IOdsApiCaller odsApiCaller)
     : IHealthCheckService
 {
-    private readonly ILogger _logger = logger;
+    private readonly ILogger<HealthCheckService> _logger = logger;
     private readonly IAdminConsoleTenantsService _adminConsoleTenantsService = adminConsoleTenantsService;
     private readonly IGetInstancesQuery _getInstancesQuery = getInstancesQuery;
     private readonly IOdsApiCaller _odsApiCaller = odsApiCaller;

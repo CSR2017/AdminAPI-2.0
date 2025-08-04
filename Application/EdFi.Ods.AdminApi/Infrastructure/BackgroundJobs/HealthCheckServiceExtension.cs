@@ -19,7 +19,7 @@ public static class HealthCheckServiceExtension
     {
         builder.Services.AddOptions();
         builder.Services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
-        builder.Services.Configure<OdsApiSettings>(configuration.GetSection("OdsApiSettings"));
+        builder.Services.Configure<OdsApiSettings>(configuration.GetSection("HealthCheck:OdsApiSettings"));
 
         builder.Services.AddSingleton<IAppSettingsOdsApiEndpoints, AppSettingsOdsApiEndpoints>();
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
